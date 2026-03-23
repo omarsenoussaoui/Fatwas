@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter --version)",
+      "Bash(flutter create:*)",
+      "Bash(flutter pub:*)",
+      "Bash(flutter gen-l10n:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(grep -rn 'class SharePlus' c:/Users/o.senoussaoui/omar/Fatwas/ --include=*.dart)"
+    ]
+  }
+}
