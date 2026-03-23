@@ -48,6 +48,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get downloadDocx => 'Download DOCX';
 
   @override
+  String get downloadPdf => 'Download PDF';
+
+  @override
   String get clearAll => 'Clear All';
 
   @override
@@ -185,4 +188,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get audioNotFound => 'Audio file not found';
+
+  @override
+  String get speed => 'Speed';
+
+  @override
+  String get search => 'Search';
+
+  @override
+  String get searchFatwas => 'Search fatwas...';
+
+  @override
+  String get noResults => 'No results';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get allCategories => 'All Categories';
+
+  @override
+  String get catWorship => 'Worship';
+
+  @override
+  String get catTransactions => 'Transactions';
+
+  @override
+  String get catFamily => 'Family';
+
+  @override
+  String get catCreed => 'Creed';
+
+  @override
+  String get catManners => 'Manners & Ethics';
+
+  @override
+  String get catContemporary => 'Contemporary';
+
+  @override
+  String get catOther => 'Other';
+
+  @override
+  String get noCategory => 'No category';
+
+  @override
+  String get fatwaTitle => 'Fatwa Title';
+
+  @override
+  String get editTitle => 'Edit Title';
+
+  @override
+  String get titleHint => 'Enter fatwa title';
+
+  @override
+  String words(int count) {
+    return '$count words';
+  }
+
+  @override
+  String get shareText => 'Share Text';
+
+  @override
+  String get copiedToClipboard => 'Copied to clipboard';
+
+  @override
+  String get autoFormat => 'AI Auto-Format';
+
+  @override
+  String get autoFormatDesc => 'Add punctuation and organize text';
+
+  @override
+  String get formatting => 'Formatting...';
+
+  @override
+  String get formatSuccess => 'Formatted successfully';
+
+  @override
+  String get formatFailed => 'Formatting failed';
 }

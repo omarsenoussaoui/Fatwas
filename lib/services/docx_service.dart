@@ -30,6 +30,7 @@ class DocxService {
       final entry = entries[i];
       final dateStr = DateFormat('yyyy/MM/dd').format(entry.fatwa.createdAt);
       final text = entry.fatwa.transcription ?? '';
+      final title = entry.fatwa.displayTitle;
 
       // Add page break before each fatwa except the first
       if (i > 0) {
@@ -45,6 +46,18 @@ class DocxService {
     <w:t>فتوى رقم ${entry.number}</w:t>
   </w:r>
 </w:p>''');
+
+      // Custom title if set
+      if (title != entry.fatwa.fileName) {
+        buffer.writeln('''<w:p>
+  <w:pPr><w:bidi/><w:jc w:val="center"/>
+    <w:rPr><w:b/><w:bCs/><w:sz w:val="28"/><w:szCs w:val="28"/><w:rtl/></w:rPr>
+  </w:pPr>
+  <w:r><w:rPr><w:b/><w:bCs/><w:sz w:val="28"/><w:szCs w:val="28"/><w:rtl/></w:rPr>
+    <w:t>${_escapeXml(title)}</w:t>
+  </w:r>
+</w:p>''');
+      }
 
       // Sheikh name
       buffer.writeln('''<w:p>

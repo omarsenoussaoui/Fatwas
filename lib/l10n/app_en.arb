@@ -13,6 +13,7 @@
   "download": "Download",
   "downloadAll": "Download All",
   "downloadDocx": "Download DOCX",
+  "downloadPdf": "Download PDF",
   "clearAll": "Clear All",
   "clearAllConfirm": "Are you sure you want to clear all fatwas?",
   "clearAllDescription": "All fatwas will be permanently deleted",
@@ -67,5 +68,35 @@
   "yesterday": "Yesterday",
   "playAudio": "Play Audio",
   "pauseAudio": "Pause",
-  "audioNotFound": "Audio file not found"
+  "audioNotFound": "Audio file not found",
+  "speed": "Speed",
+  "search": "Search",
+  "searchFatwas": "Search fatwas...",
+  "noResults": "No results",
+  "category": "Category",
+  "allCategories": "All Categories",
+  "catWorship": "Worship",
+  "catTransactions": "Transactions",
+  "catFamily": "Family",
+  "catCreed": "Creed",
+  "catManners": "Manners & Ethics",
+  "catContemporary": "Contemporary",
+  "catOther": "Other",
+  "noCategory": "No category",
+  "fatwaTitle": "Fatwa Title",
+  "editTitle": "Edit Title",
+  "titleHint": "Enter fatwa title",
+  "words": "{count} words",
+  "@words": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "shareText": "Share Text",
+  "copiedToClipboard": "Copied to clipboard",
+  "autoFormat": "AI Auto-Format",
+  "autoFormatDesc": "Add punctuation and organize text",
+  "formatting": "Formatting...",
+  "formatSuccess": "Formatted successfully",
+  "formatFailed": "Formatting failed"
 }

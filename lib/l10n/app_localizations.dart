@@ -176,6 +176,12 @@ abstract class AppLocalizations {
   /// **'تحميل DOCX'**
   String get downloadDocx;
 
+  /// No description provided for @downloadPdf.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحميل PDF'**
+  String get downloadPdf;
+
   /// No description provided for @clearAll.
   ///
   /// In ar, this message translates to:
@@ -445,6 +451,156 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'ملف الصوت غير موجود'**
   String get audioNotFound;
+
+  /// No description provided for @speed.
+  ///
+  /// In ar, this message translates to:
+  /// **'السرعة'**
+  String get speed;
+
+  /// No description provided for @search.
+  ///
+  /// In ar, this message translates to:
+  /// **'بحث'**
+  String get search;
+
+  /// No description provided for @searchFatwas.
+  ///
+  /// In ar, this message translates to:
+  /// **'البحث في الفتاوى...'**
+  String get searchFatwas;
+
+  /// No description provided for @noResults.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد نتائج'**
+  String get noResults;
+
+  /// No description provided for @category.
+  ///
+  /// In ar, this message translates to:
+  /// **'التصنيف'**
+  String get category;
+
+  /// No description provided for @allCategories.
+  ///
+  /// In ar, this message translates to:
+  /// **'جميع التصنيفات'**
+  String get allCategories;
+
+  /// No description provided for @catWorship.
+  ///
+  /// In ar, this message translates to:
+  /// **'العبادات'**
+  String get catWorship;
+
+  /// No description provided for @catTransactions.
+  ///
+  /// In ar, this message translates to:
+  /// **'المعاملات'**
+  String get catTransactions;
+
+  /// No description provided for @catFamily.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأسرة'**
+  String get catFamily;
+
+  /// No description provided for @catCreed.
+  ///
+  /// In ar, this message translates to:
+  /// **'العقيدة'**
+  String get catCreed;
+
+  /// No description provided for @catManners.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأخلاق والآداب'**
+  String get catManners;
+
+  /// No description provided for @catContemporary.
+  ///
+  /// In ar, this message translates to:
+  /// **'معاصرة'**
+  String get catContemporary;
+
+  /// No description provided for @catOther.
+  ///
+  /// In ar, this message translates to:
+  /// **'أخرى'**
+  String get catOther;
+
+  /// No description provided for @noCategory.
+  ///
+  /// In ar, this message translates to:
+  /// **'بدون تصنيف'**
+  String get noCategory;
+
+  /// No description provided for @fatwaTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'عنوان الفتوى'**
+  String get fatwaTitle;
+
+  /// No description provided for @editTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل العنوان'**
+  String get editTitle;
+
+  /// No description provided for @titleHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل عنوان الفتوى'**
+  String get titleHint;
+
+  /// No description provided for @words.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} كلمة'**
+  String words(int count);
+
+  /// No description provided for @shareText.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشاركة النص'**
+  String get shareText;
+
+  /// No description provided for @copiedToClipboard.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم النسخ'**
+  String get copiedToClipboard;
+
+  /// No description provided for @autoFormat.
+  ///
+  /// In ar, this message translates to:
+  /// **'تنسيق تلقائي بالذكاء الاصطناعي'**
+  String get autoFormat;
+
+  /// No description provided for @autoFormatDesc.
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة علامات الترقيم وتنظيم النص'**
+  String get autoFormatDesc;
+
+  /// No description provided for @formatting.
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري التنسيق...'**
+  String get formatting;
+
+  /// No description provided for @formatSuccess.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم التنسيق بنجاح'**
+  String get formatSuccess;
+
+  /// No description provided for @formatFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'فشل التنسيق'**
+  String get formatFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -48,6 +48,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get downloadDocx => 'تحميل DOCX';
 
   @override
+  String get downloadPdf => 'تحميل PDF';
+
+  @override
   String get clearAll => 'مسح الكل';
 
   @override
@@ -185,4 +188,81 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get audioNotFound => 'ملف الصوت غير موجود';
+
+  @override
+  String get speed => 'السرعة';
+
+  @override
+  String get search => 'بحث';
+
+  @override
+  String get searchFatwas => 'البحث في الفتاوى...';
+
+  @override
+  String get noResults => 'لا توجد نتائج';
+
+  @override
+  String get category => 'التصنيف';
+
+  @override
+  String get allCategories => 'جميع التصنيفات';
+
+  @override
+  String get catWorship => 'العبادات';
+
+  @override
+  String get catTransactions => 'المعاملات';
+
+  @override
+  String get catFamily => 'الأسرة';
+
+  @override
+  String get catCreed => 'العقيدة';
+
+  @override
+  String get catManners => 'الأخلاق والآداب';
+
+  @override
+  String get catContemporary => 'معاصرة';
+
+  @override
+  String get catOther => 'أخرى';
+
+  @override
+  String get noCategory => 'بدون تصنيف';
+
+  @override
+  String get fatwaTitle => 'عنوان الفتوى';
+
+  @override
+  String get editTitle => 'تعديل العنوان';
+
+  @override
+  String get titleHint => 'أدخل عنوان الفتوى';
+
+  @override
+  String words(int count) {
+    return '$count كلمة';
+  }
+
+  @override
+  String get shareText => 'مشاركة النص';
+
+  @override
+  String get copiedToClipboard => 'تم النسخ';
+
+  @override
+  String get autoFormat => 'تنسيق تلقائي بالذكاء الاصطناعي';
+
+  @override
+  String get autoFormatDesc => 'إضافة علامات الترقيم وتنظيم النص';
+
+  @override
+  String get formatting => 'جاري التنسيق...';
+
+  @override
+  String get formatSuccess => 'تم التنسيق بنجاح';
+
+  @override
+  String get formatFailed => 'فشل التنسيق';
 }

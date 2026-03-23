@@ -18,6 +18,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool _isSearching = false;
+  final _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -27,47 +30,97 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final provider = context.watch<FatwaProvider>();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          l10n.sheikhName,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: l10n.searchFatwas,
+                  hintStyle: TextStyle(color: Colors.white.withAlpha(150)),
+                  border: InputBorder.none,
+                ),
+                onChanged: (q) => provider.setSearchQuery(q),
+              )
+            : Text(
+                l10n.sheikhName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
         actions: [
-          if (provider.fatwas.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.download),
-              tooltip: l10n.downloadAll,
-              onPressed: () => _exportAll(context),
-            ),
-          if (provider.fatwas.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.delete_sweep),
-              tooltip: l10n.clearAll,
-              onPressed: () => _showClearAllDialog(context),
-            ),
+          // Search toggle
           IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: l10n.settings,
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            tooltip: l10n.search,
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) {
+                  _searchController.clear();
+                  provider.setSearchQuery('');
+                }
+              });
+            },
+          ),
+          if (!_isSearching) ...[
+            if (provider.allFatwas.isNotEmpty)
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.download),
+                tooltip: l10n.downloadAll,
+                onSelected: (value) {
+                  if (value == 'docx') _exportAll(context);
+                  if (value == 'pdf') _exportAllPdf(context);
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(value: 'docx', child: Text(l10n.downloadDocx)),
+                  PopupMenuItem(value: 'pdf', child: Text(l10n.downloadPdf)),
+                ],
+              ),
+            if (provider.allFatwas.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.delete_sweep),
+                tooltip: l10n.clearAll,
+                onPressed: () => _showClearAllDialog(context),
+              ),
+            IconButton(
+              icon: const Icon(Icons.settings),
+              tooltip: l10n.settings,
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              ),
             ),
+          ],
+        ],
+      ),
+      body: Column(
+        children: [
+          // Fatwa list
+          Expanded(
+            child: provider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : provider.fatwas.isEmpty
+                    ? _isSearching
+                        ? _buildNoResults(context, l10n)
+                        : _buildEmptyState(context, l10n)
+                    : _buildFatwaList(context, provider, l10n),
           ),
         ],
       ),
-      body: provider.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : provider.fatwas.isEmpty
-              ? _buildEmptyState(context, l10n)
-              : _buildFatwaList(context, provider, l10n),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await Navigator.push(
@@ -77,6 +130,19 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         icon: const Icon(Icons.upload_file),
         label: Text(l10n.upload),
+      ),
+    );
+  }
+
+  Widget _buildNoResults(BuildContext context, AppLocalizations l10n) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off, size: 64, color: Colors.grey[300]),
+          const SizedBox(height: 12),
+          Text(l10n.noResults, style: TextStyle(color: Colors.grey[500], fontSize: 16)),
+        ],
       ),
     );
   }
@@ -182,12 +248,17 @@ class _HomeScreenState extends State<HomeScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: fatwa.status == TranscriptionStatus.done
-              ? () => Navigator.push(
+              ? () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => FatwaDetailScreen(fatwa: fatwa),
                     ),
-                  )
+                  );
+                  if (context.mounted) {
+                    context.read<FatwaProvider>().loadFatwas();
+                  }
+                }
               : null,
           onLongPress: () async {
             final confirmed = await _showDeleteDialog(context, l10n);
@@ -206,7 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        fatwa.fileName,
+                        fatwa.displayTitle,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
@@ -247,13 +318,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  l10n.sheikhName,
-                  style: TextStyle(
-                    color: AppTheme.primaryGreen,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                // Sheikh name + word count row
+                Row(
+                  children: [
+                    Text(
+                      l10n.sheikhName,
+                      style: TextStyle(
+                        color: AppTheme.primaryGreen,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (fatwa.wordCount > 0)
+                      Text(
+                        l10n.words(fatwa.wordCount),
+                        style: TextStyle(color: Colors.grey[500], fontSize: 11),
+                      ),
+                  ],
                 ),
                 if (fatwa.transcription != null &&
                     fatwa.transcription!.isNotEmpty) ...[
@@ -382,10 +464,24 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${l10n.exportFailed}: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('${l10n.exportFailed}: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _exportAllPdf(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final path = await context.read<FatwaProvider>().exportAllPdf();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.exportSuccess)),
+      );
+      await Share.shareXFiles([XFile(path)]);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${l10n.exportFailed}: $e'), backgroundColor: Colors.red),
       );
     }
   }

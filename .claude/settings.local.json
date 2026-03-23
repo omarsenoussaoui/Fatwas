@@ -6,7 +6,9 @@
       "Bash(flutter pub:*)",
       "Bash(flutter gen-l10n:*)",
       "Bash(flutter analyze:*)",
-      "Bash(grep -rn 'class SharePlus' c:/Users/o.senoussaoui/omar/Fatwas/ --include=*.dart)"
+      "Bash(grep -rn 'class SharePlus' c:/Users/o.senoussaoui/omar/Fatwas/ --include=*.dart)",
+      "Bash(flutter build:*)",
+      "Bash(dart run:*)"
     ]
   }
 }

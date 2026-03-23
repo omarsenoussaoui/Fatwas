@@ -13,6 +13,7 @@
   "download": "تحميل",
   "downloadAll": "تحميل الكل",
   "downloadDocx": "تحميل DOCX",
+  "downloadPdf": "تحميل PDF",
   "clearAll": "مسح الكل",
   "clearAllConfirm": "هل أنت متأكد من مسح جميع الفتاوى؟",
   "clearAllDescription": "سيتم حذف جميع الفتاوى نهائياً",
@@ -67,5 +68,35 @@
   "yesterday": "الأمس",
   "playAudio": "تشغيل الصوت",
   "pauseAudio": "إيقاف مؤقت",
-  "audioNotFound": "ملف الصوت غير موجود"
+  "audioNotFound": "ملف الصوت غير موجود",
+  "speed": "السرعة",
+  "search": "بحث",
+  "searchFatwas": "البحث في الفتاوى...",
+  "noResults": "لا توجد نتائج",
+  "category": "التصنيف",
+  "allCategories": "جميع التصنيفات",
+  "catWorship": "العبادات",
+  "catTransactions": "المعاملات",
+  "catFamily": "الأسرة",
+  "catCreed": "العقيدة",
+  "catManners": "الأخلاق والآداب",
+  "catContemporary": "معاصرة",
+  "catOther": "أخرى",
+  "noCategory": "بدون تصنيف",
+  "fatwaTitle": "عنوان الفتوى",
+  "editTitle": "تعديل العنوان",
+  "titleHint": "أدخل عنوان الفتوى",
+  "words": "{count} كلمة",
+  "@words": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "shareText": "مشاركة النص",
+  "copiedToClipboard": "تم النسخ",
+  "autoFormat": "تنسيق تلقائي بالذكاء الاصطناعي",
+  "autoFormatDesc": "إضافة علامات الترقيم وتنظيم النص",
+  "formatting": "جاري التنسيق...",
+  "formatSuccess": "تم التنسيق بنجاح",
+  "formatFailed": "فشل التنسيق"
 }

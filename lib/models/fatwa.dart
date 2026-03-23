@@ -4,6 +4,7 @@ class Fatwa {
   final int? id;
   final String fileName;
   final String? filePath;
+  final String? title;
   final String? transcription;
   final TranscriptionStatus status;
   final String? errorMessage;
@@ -14,6 +15,7 @@ class Fatwa {
     this.id,
     required this.fileName,
     this.filePath,
+    this.title,
     this.transcription,
     this.status = TranscriptionStatus.pending,
     this.errorMessage,
@@ -22,10 +24,18 @@ class Fatwa {
   })  : createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
+  String get displayTitle => (title != null && title!.isNotEmpty) ? title! : fileName;
+
+  int get wordCount {
+    if (transcription == null || transcription!.isEmpty) return 0;
+    return transcription!.trim().split(RegExp(r'\s+')).length;
+  }
+
   Fatwa copyWith({
     int? id,
     String? fileName,
     String? filePath,
+    String? title,
     String? transcription,
     TranscriptionStatus? status,
     String? errorMessage,
@@ -36,6 +46,7 @@ class Fatwa {
       id: id ?? this.id,
       fileName: fileName ?? this.fileName,
       filePath: filePath ?? this.filePath,
+      title: title ?? this.title,
       transcription: transcription ?? this.transcription,
       status: status ?? this.status,
       errorMessage: errorMessage ?? this.errorMessage,
@@ -49,6 +60,7 @@ class Fatwa {
       'id': id,
       'fileName': fileName,
       'filePath': filePath,
+      'title': title,
       'transcription': transcription,
       'status': status.index,
       'errorMessage': errorMessage,
@@ -62,6 +74,7 @@ class Fatwa {
       id: map['id'] as int?,
       fileName: map['fileName'] as String,
       filePath: map['filePath'] as String?,
+      title: map['title'] as String?,
       transcription: map['transcription'] as String?,
       status: TranscriptionStatus.values[map['status'] as int],
       errorMessage: map['errorMessage'] as String?,
