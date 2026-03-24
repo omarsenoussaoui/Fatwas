@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/fatwa_provider.dart';
 import '../providers/locale_provider.dart';
 import '../services/whisper_service.dart';
+import '../constants.dart';
 import '../theme.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -22,7 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _testResult; // 'success', 'failed', or null
   bool _isUsingCustomKey = false;
 
-  String get _defaultKey => dotenv.env['GROQ_API_KEY'] ?? '';
+  String get _defaultKey => defaultGroqApiKey;
 
   @override
   void initState() {

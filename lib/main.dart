@@ -8,23 +8,28 @@ import 'providers/fatwa_provider.dart';
 import 'providers/locale_provider.dart';
 import 'screens/home_screen.dart';
 import 'theme.dart';
+import 'constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
+
+  // Try loading .env, but don't crash if it fails (release mode)
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    // .env not available in release — use hardcoded default
+  }
 
   final localeProvider = LocaleProvider();
   await localeProvider.loadLocale();
 
   final fatwaProvider = FatwaProvider();
-  // Load API key from shared preferences
+  // Load API key: SharedPreferences > .env > hardcoded default
   final prefs = await SharedPreferences.getInstance();
   final apiKey = prefs.getString('groq_api_key') ??
       dotenv.env['GROQ_API_KEY'] ??
-      '';
-  if (apiKey.isNotEmpty) {
-    fatwaProvider.setApiKey(apiKey);
-  }
+      defaultGroqApiKey;
+  fatwaProvider.setApiKey(apiKey);
 
   runApp(
     MultiProvider(
