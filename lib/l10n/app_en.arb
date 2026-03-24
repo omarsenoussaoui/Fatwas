@@ -98,5 +98,11 @@
   "autoFormatDesc": "Add punctuation and organize text",
   "formatting": "Formatting...",
   "formatSuccess": "Formatted successfully",
-  "formatFailed": "Formatting failed"
+  "formatFailed": "Formatting failed",
+  "sharedFilesReceived": "{count} audio file(s) received - transcribing...",
+  "@sharedFilesReceived": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

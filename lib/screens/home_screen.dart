@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../l10n/app_localizations.dart';
 import '../models/fatwa.dart';
 import '../providers/fatwa_provider.dart';
+import '../services/share_receiver_service.dart';
 import '../theme.dart';
 import 'fatwa_detail_screen.dart';
 import 'upload_screen.dart';
@@ -26,11 +27,45 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<FatwaProvider>().loadFatwas();
+      _handleSharedFiles();
     });
+  }
+
+  /// Handle audio files shared from other apps (Telegram, WhatsApp, etc.)
+  Future<void> _handleSharedFiles() async {
+    // Check for files shared on cold start
+    final initialFiles = await ShareReceiverService.getInitialSharedFiles();
+    if (initialFiles != null && initialFiles.isNotEmpty && mounted) {
+      _processSharedFiles(initialFiles);
+    }
+
+    // Listen for files shared while app is running
+    ShareReceiverService.onSharedFiles = (filePaths) {
+      if (mounted) {
+        _processSharedFiles(filePaths);
+      }
+    };
+  }
+
+  void _processSharedFiles(List<String> filePaths) {
+    final l10n = AppLocalizations.of(context)!;
+    final provider = context.read<FatwaProvider>();
+
+    // Show snackbar notification
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.sharedFilesReceived(filePaths.length)),
+        backgroundColor: AppTheme.primaryGreen,
+      ),
+    );
+
+    // Add files and auto-transcribe
+    provider.addSharedFilesAndTranscribe(filePaths);
   }
 
   @override
   void dispose() {
+    ShareReceiverService.onSharedFiles = null;
     _searchController.dispose();
     super.dispose();
   }

@@ -265,4 +265,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get formatFailed => 'فشل التنسيق';
+
+  @override
+  String sharedFilesReceived(int count) {
+    return 'تم استلام $count ملف صوتي - جاري التحويل...';
+  }
 }

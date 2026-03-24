@@ -72,6 +72,19 @@ class FatwaProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Add shared files from external apps (Telegram, WhatsApp, etc.)
+  /// and automatically start transcription
+  Future<void> addSharedFilesAndTranscribe(List<String> filePaths) async {
+    final fileNames = filePaths.map((p) {
+      final name = p.split('/').last;
+      return name.isNotEmpty ? name : 'shared_audio_${DateTime.now().millisecondsSinceEpoch}';
+    }).toList();
+
+    await addFatwas(filePaths, fileNames);
+    // Auto-transcribe the newly added files
+    await transcribeAll();
+  }
+
   Future<void> transcribeAll() async {
     if (_apiKey == null || _apiKey!.isEmpty) return;
 

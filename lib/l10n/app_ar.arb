@@ -98,5 +98,11 @@
   "autoFormatDesc": "إضافة علامات الترقيم وتنظيم النص",
   "formatting": "جاري التنسيق...",
   "formatSuccess": "تم التنسيق بنجاح",
-  "formatFailed": "فشل التنسيق"
+  "formatFailed": "فشل التنسيق",
+  "sharedFilesReceived": "تم استلام {count} ملف صوتي - جاري التحويل...",
+  "@sharedFilesReceived": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

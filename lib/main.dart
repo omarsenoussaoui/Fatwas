@@ -7,11 +7,13 @@ import 'l10n/app_localizations.dart';
 import 'providers/fatwa_provider.dart';
 import 'providers/locale_provider.dart';
 import 'screens/home_screen.dart';
+import 'services/share_receiver_service.dart';
 import 'theme.dart';
 import 'constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  ShareReceiverService.init();
 
   // Try loading .env, but don't crash if it fails (release mode)
   try {

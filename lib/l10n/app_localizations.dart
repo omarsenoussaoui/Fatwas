@@ -601,6 +601,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'فشل التنسيق'**
   String get formatFailed;
+
+  /// No description provided for @sharedFilesReceived.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم استلام {count} ملف صوتي - جاري التحويل...'**
+  String sharedFilesReceived(int count);
 }
 
 class _AppLocalizationsDelegate

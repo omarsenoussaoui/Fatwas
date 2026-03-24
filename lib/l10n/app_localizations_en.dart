@@ -265,4 +265,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get formatFailed => 'Formatting failed';
+
+  @override
+  String sharedFilesReceived(int count) {
+    return '$count audio file(s) received - transcribing...';
+  }
 }
