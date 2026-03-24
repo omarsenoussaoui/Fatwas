@@ -8,7 +8,12 @@
       "Bash(flutter analyze:*)",
       "Bash(grep -rn 'class SharePlus' c:/Users/o.senoussaoui/omar/Fatwas/ --include=*.dart)",
       "Bash(flutter build:*)",
-      "Bash(dart run:*)"
+      "Bash(dart run:*)",
+      "Bash(python -m py_compile config.py)",
+      "Bash(python -m py_compile database.py)",
+      "Bash(python -m py_compile transcriber.py)",
+      "Bash(python -m py_compile bot.py)",
+      "Bash(python -m py_compile main.py)"
     ]
   }
 }
