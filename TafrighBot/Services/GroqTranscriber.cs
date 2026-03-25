@@ -74,8 +74,7 @@ public class GroqTranscriber
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogError("Groq API error {Status}: {Body}", (int)response.StatusCode, body);
-            var errorMsg = TryParseError(body) ?? $"خطأ من الخادم (HTTP {(int)response.StatusCode})";
-            throw new HttpRequestException(errorMsg);
+            throw new HttpRequestException(GetArabicError((int)response.StatusCode, body));
         }
 
         return ParseTranscription(body);
@@ -100,22 +99,17 @@ public class GroqTranscriber
         }
     }
 
-    private static string? TryParseError(string body)
+    private static string GetArabicError(int statusCode, string _)
     {
-        try
+        return statusCode switch
         {
-            using var doc = JsonDocument.Parse(body);
-            if (doc.RootElement.TryGetProperty("error", out var error))
-            {
-                if (error.ValueKind == JsonValueKind.Object &&
-                    error.TryGetProperty("message", out var msg))
-                    return msg.GetString();
-                if (error.ValueKind == JsonValueKind.String)
-                    return error.GetString();
-            }
-        }
-        catch { }
-        return null;
+            400 => "❌ طلب غير صالح — الملف قد يكون تالفاً أو بصيغة غير مدعومة",
+            401 => "❌ مفتاح API غير صالح",
+            413 => "❌ حجم الملف كبير جداً",
+            429 => "❌ تم تجاوز الحد المسموح — حاول لاحقاً",
+            500 or 502 or 503 => "❌ خطأ في خادم التحويل — حاول لاحقاً",
+            _ => $"❌ خطأ غير متوقع (رمز {statusCode})"
+        };
     }
 
     private static string GetMimeType(string fileName)
