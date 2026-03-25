@@ -8,7 +8,7 @@ services:
     environment:
       - TELEGRAM_BOT_TOKEN=7855088071:AAHkvP8po77ITSruud1fO_Gp3SJOituI2xI
       - GROQ_API_KEY=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
-      - WEBHOOK_URL=http://62.169.24.169:5060
+      - WEBHOOK_URL=
       - PORT=5060
       - DB_PATH=/app/data/fatwas_bot.db
     volumes:
