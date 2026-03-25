@@ -3,4 +3,4 @@ obj/
 .git
 .gitignore
 *.md
-data/
+data/*.db
