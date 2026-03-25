@@ -81,21 +81,35 @@ public class BotHandler
             return;
         }
 
-        // Handle documents that are audio
-        if (message.Document != null && IsAudioMimeType(message.Document.MimeType))
+        // Handle documents that are audio or video
+        if (message.Document != null && IsMediaMimeType(message.Document.MimeType))
         {
-            var fileName = message.Document.FileName ?? "audio.mp3";
+            var fileName = message.Document.FileName ?? "media.mp4";
             await ProcessAudioAsync(message, message.Document.FileId, fileName, 0);
             return;
         }
 
-        // Handle media groups (forwarded multiple voices)
-        // Each voice in a group triggers HandleMessageAsync separately, so handled above
+        // Handle video messages
+        if (message.Video != null)
+        {
+            var fileName = message.Video.FileName ?? "video.mp4";
+            await ProcessAudioAsync(message, message.Video.FileId,
+                fileName, message.Video.Duration);
+            return;
+        }
 
-        // Not an audio message
+        // Handle video notes (round videos)
+        if (message.VideoNote != null)
+        {
+            await ProcessAudioAsync(message, message.VideoNote.FileId,
+                "video_note.mp4", message.VideoNote.Duration);
+            return;
+        }
+
+        // Not an audio/video message
         await _bot.SendMessage(
             chatId: message.Chat.Id,
-            text: "🎤 أرسل لي رسالة صوتية أو ملف صوتي وسأقوم بتحويله إلى نص.\n\n"
+            text: "🎤 أرسل لي رسالة صوتية أو ملف صوتي أو فيديو وسأقوم بتحويله إلى نص.\n\n"
                 + "اكتب /help للمساعدة.",
             replyParameters: new ReplyParameters { MessageId = message.MessageId }
         );
@@ -210,12 +224,12 @@ public class BotHandler
     {
         var text = "﷽\n\n"
             + $"🕌 *مرحباً بكم في بوت تفريغ فتاوى*\n*{EscapeMarkdown(SheikhName)}*\n\n"
-            + "هذا البوت يقوم بتحويل الرسائل الصوتية والملفات الصوتية إلى نص مكتوب\\.\n\n"
+            + "هذا البوت يقوم بتحويل الرسائل الصوتية والمقاطع المرئية إلى نص مكتوب\\.\n\n"
             + "📌 *طريقة الاستخدام:*\n"
-            + "1️⃣ أرسل أو أعد توجيه رسالة صوتية\n"
-            + "2️⃣ أو أرسل ملف صوتي \\(mp3, wav, m4a, ogg\\)\n"
+            + "1️⃣ أرسل أو أعد توجيه رسالة صوتية أو فيديو\n"
+            + "2️⃣ أو أرسل ملف صوتي \\(mp3, wav, m4a, ogg\\) أو فيديو \\(mp4, webm\\)\n"
             + "3️⃣ انتظر قليلاً وستحصل على النص\n\n"
-            + "يمكنك إرسال عدة رسائل صوتية وسيتم تحويل كل واحدة على حدة\\.\n\n"
+            + "يمكنك إرسال عدة رسائل وسيتم تحويل كل واحدة على حدة\\.\n\n"
             + "اكتب /help لمزيد من المعلومات\\.";
 
         await _bot.SendMessage(chatId: chatId, text: text, parseMode: ParseMode.MarkdownV2);
@@ -224,14 +238,15 @@ public class BotHandler
     private async Task SendHelpMessage(long chatId)
     {
         var text = "📖 *المساعدة*\n\n"
-            + "🎤 *إرسال صوت:* أرسل رسالة صوتية أو ملف صوتي وسيتم تحويله إلى نص\n\n"
+            + "🎤 *إرسال صوت أو فيديو:* أرسل رسالة صوتية أو فيديو أو ملف وسيتم تحويله إلى نص\n\n"
             + "📋 *الأوامر المتاحة:*\n"
             + "/start \\- رسالة الترحيب\n"
             + "/help \\- هذه المساعدة\n"
             + "/history \\- آخر 10 تفريغات\n"
             + "/stats \\- إحصائياتك\n\n"
             + "📁 *الصيغ المدعومة:*\n"
-            + "mp3, wav, m4a, ogg, flac, webm\n\n"
+            + "🔊 صوت: mp3, wav, m4a, ogg, flac, webm\n"
+            + "🎬 فيديو: mp4, webm, فيديو دائري\n\n"
             + "⚠️ *الحد الأقصى:* 25MB لكل ملف\n\n"
             + $"🕌 *{EscapeMarkdown(SheikhName)}*";
 
@@ -292,12 +307,12 @@ public class BotHandler
         );
     }
 
-    private static bool IsAudioMimeType(string? mimeType)
+    private static bool IsMediaMimeType(string? mimeType)
     {
         if (string.IsNullOrEmpty(mimeType)) return false;
         return mimeType.StartsWith("audio/") ||
-               mimeType == "application/ogg" ||
-               mimeType == "video/webm"; // Some voice apps send as webm
+               mimeType.StartsWith("video/") ||
+               mimeType == "application/ogg";
     }
 
     private static string EscapeMarkdown(string text)

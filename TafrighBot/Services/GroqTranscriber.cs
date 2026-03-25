@@ -130,6 +130,10 @@ public class GroqTranscriber
             ".oga" => "audio/ogg",
             ".flac" => "audio/flac",
             ".webm" => "audio/webm",
+            ".mp4" => "video/mp4",
+            ".mkv" => "video/x-matroska",
+            ".avi" => "video/x-msvideo",
+            ".mov" => "video/quicktime",
             _ => "audio/mpeg"
         };
     }
