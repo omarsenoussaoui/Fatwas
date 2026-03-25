@@ -15,7 +15,10 @@
       "Bash(python -m py_compile bot.py)",
       "Bash(python -m py_compile main.py)",
       "Bash(pip install:*)",
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "WebFetch(domain:console.groq.com)",
+      "Bash(find /c/Users/o.senoussaoui/.nuget/packages/telegram.bot/22.4.3/ -name *.cs)",
+      "Bash(find /c/Users/o.senoussaoui/.nuget/packages/telegram.bot/22.4.3/ -name *.xml)"
     ]
   }
 }

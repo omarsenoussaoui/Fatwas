@@ -20,12 +20,12 @@ class GroqWhisperService {
   Future<String> transcribe(String filePath, {int retryCount = 0}) async {
     final file = File(filePath);
     if (!await file.exists()) {
-      throw Exception('File not found: $filePath');
+      throw Exception('الملف غير موجود: $filePath');
     }
 
     final fileSize = await file.length();
     if (fileSize > _maxFileSize) {
-      throw Exception('File too large (${(fileSize / 1024 / 1024).toStringAsFixed(1)}MB). Groq limit is 25MB.');
+      throw Exception('حجم الملف كبير جداً (${(fileSize / 1024 / 1024).toStringAsFixed(1)}MB). الحد الأقصى 25MB.\nقص الملف إلى مقاطع أصغر وأعد المحاولة.');
     }
 
     final mimeType = lookupMimeType(filePath) ?? 'audio/mpeg';
@@ -49,13 +49,13 @@ class GroqWhisperService {
         const Duration(minutes: 5),
       );
       response = await http.Response.fromStream(streamedResponse);
-    } on SocketException catch (e) {
-      throw Exception('Network error: ${e.message}');
-    } on HttpException catch (e) {
-      throw Exception('HTTP error: ${e.message}');
+    } on SocketException {
+      throw Exception('خطأ في الاتصال بالشبكة — تحقق من الإنترنت');
+    } on HttpException {
+      throw Exception('خطأ في الاتصال بالخادم');
     } catch (e) {
       if (e is Exception) rethrow;
-      throw Exception('Request failed: $e');
+      throw Exception('فشل الطلب: $e');
     }
 
     // Handle rate limiting - retry after delay
@@ -79,21 +79,20 @@ class GroqWhisperService {
 
   String _parseSuccessResponse(String body) {
     if (body.isEmpty) {
-      throw Exception('Empty response from API');
+      throw Exception('استجابة فارغة من الخادم');
     }
     try {
       final json = jsonDecode(body);
       final text = json['text'];
       if (text == null || (text is String && text.isEmpty)) {
-        throw Exception('No transcription text in response');
+        throw Exception('لم يتم العثور على نص في الاستجابة');
       }
       return text as String;
     } on FormatException {
-      // Response is not JSON - might be plain text transcription
       if (body.trim().isNotEmpty) {
         return body.trim();
       }
-      throw Exception('Invalid response format from API');
+      throw Exception('استجابة غير صالحة من الخادم');
     }
   }
 
@@ -112,21 +111,17 @@ class GroqWhisperService {
       // Not JSON
     }
 
-    // Common status code messages
     switch (status) {
       case 400:
-        return 'Bad request - file may be corrupted or unsupported format (HTTP 400)';
+        return 'طلب غير صالح — الملف قد يكون تالفاً أو بصيغة غير مدعومة';
       case 401:
-        return 'Invalid API key (HTTP 401)';
+        return 'مفتاح API غير صالح';
       case 413:
-        return 'File too large for API (HTTP 413)';
+        return 'حجم الملف كبير جداً';
       case 429:
-        return 'Rate limit exceeded - please try again later (HTTP 429)';
+        return 'تم تجاوز الحد المسموح — حاول لاحقاً';
       default:
-        if (body.isNotEmpty && body.length < 200) {
-          return 'API error: $body (HTTP $status)';
-        }
-        return 'Transcription failed (HTTP $status)';
+        return 'خطأ غير متوقع (رمز $status)';
     }
   }
 

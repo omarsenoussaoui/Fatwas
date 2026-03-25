@@ -10,14 +10,23 @@ var botToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN")
 var groqApiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY")
     ?? throw new InvalidOperationException("GROQ_API_KEY is required");
 var webhookUrl = Environment.GetEnvironmentVariable("WEBHOOK_URL") ?? "";
+var telegramApiUrl = Environment.GetEnvironmentVariable("TELEGRAM_API_URL") ?? "";
 var dbPath = Environment.GetEnvironmentVariable("DB_PATH") ?? "data/fatwas_bot.db";
 var port = int.Parse(Environment.GetEnvironmentVariable("PORT") ?? "5060");
 
 // Configure Kestrel to listen on the specified port
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
-// Register services
-builder.Services.AddSingleton<ITelegramBotClient>(new TelegramBotClient(botToken));
+// Register services — use local Bot API server if configured (removes 20MB limit)
+if (!string.IsNullOrEmpty(telegramApiUrl))
+{
+    var options = new TelegramBotClientOptions(botToken, telegramApiUrl);
+    builder.Services.AddSingleton<ITelegramBotClient>(new TelegramBotClient(options));
+}
+else
+{
+    builder.Services.AddSingleton<ITelegramBotClient>(new TelegramBotClient(botToken));
+}
 builder.Services.AddSingleton(sp => new GroqTranscriber(groqApiKey, sp.GetRequiredService<ILogger<GroqTranscriber>>()));
 builder.Services.AddSingleton(sp => new AudioConverter(sp.GetRequiredService<ILogger<AudioConverter>>()));
 builder.Services.AddSingleton(new Database(dbPath));

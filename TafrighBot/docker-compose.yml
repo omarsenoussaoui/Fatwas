@@ -1,13 +1,30 @@
 services:
+  # Telegram Bot API Local Server — removes 20MB download limit (up to 2GB)
+  # Get API_ID and API_HASH from https://my.telegram.org
+  telegram-bot-api:
+    image: aiogram/telegram-bot-api:latest
+    container_name: tafrigh-telegram-api
+    restart: unless-stopped
+    environment:
+      TELEGRAM_API_ID: "${TELEGRAM_API_ID}"
+      TELEGRAM_API_HASH: "${TELEGRAM_API_HASH}"
+    volumes:
+      - telegram_api_data:/var/lib/telegram-bot-api
+    ports:
+      - "8082:8081"
+
   tafrigh-bot:
     build: .
     container_name: tafrigh-fatwa-bot
     restart: unless-stopped
+    depends_on:
+      - telegram-bot-api
     ports:
       - "5060:5060"
     environment:
       - TELEGRAM_BOT_TOKEN=7855088071:AAHkvP8po77ITSruud1fO_Gp3SJOituI2xI
       - GROQ_API_KEY=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
+      - TELEGRAM_API_URL=http://telegram-bot-api:8081
       - WEBHOOK_URL=
       - PORT=5060
       - DB_PATH=/app/data/fatwas_bot.db
@@ -16,3 +33,4 @@ services:
 
 volumes:
   bot_data:
+  telegram_api_data:

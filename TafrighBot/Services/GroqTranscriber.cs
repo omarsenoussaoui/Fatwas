@@ -10,7 +10,6 @@ public class GroqTranscriber
     private const string Language = "ar";
     private const int MaxRetries = 3;
     private const int RetryDelaySeconds = 3;
-    private const long MaxFileSize = 25 * 1024 * 1024; // 25MB
 
     private readonly HttpClient _http;
     private readonly string _apiKey;

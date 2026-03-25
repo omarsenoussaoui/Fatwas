@@ -222,9 +222,18 @@ public class BotHandler
             // Delete processing message
             try { await _bot.DeleteMessage(chatId, processingMsg.MessageId); } catch { }
 
+            // Detect Telegram file too big error
+            var errorText = ex.Message.Contains("file is too big", StringComparison.OrdinalIgnoreCase)
+                ? "❌ حجم الملف كبير جداً (أكثر من 20MB).\n\n"
+                  + "💡 الحلول:\n"
+                  + "• قص الفيديو إلى مقاطع أصغر\n"
+                  + "• أرسل الصوت فقط بدون فيديو\n"
+                  + "• استخدم تطبيق الجوال للملفات الكبيرة"
+                : $"❌ فشل التحويل: {GetArabicErrorMessage(ex)}\n\nأعد إرسال الملف للمحاولة مرة أخرى.";
+
             await _bot.SendMessage(
                 chatId: chatId,
-                text: $"❌ فشل التحويل: {ex.Message}\n\nأعد إرسال الملف للمحاولة مرة أخرى.",
+                text: errorText,
                 replyParameters: new ReplyParameters { MessageId = message.MessageId }
             );
         }
@@ -336,6 +345,28 @@ public class BotHandler
         return mimeType.StartsWith("audio/") ||
                mimeType.StartsWith("video/") ||
                mimeType == "application/ogg";
+    }
+
+    private static string GetArabicErrorMessage(Exception ex)
+    {
+        var msg = ex.Message;
+        if (msg.Contains("Network", StringComparison.OrdinalIgnoreCase) ||
+            msg.Contains("connection", StringComparison.OrdinalIgnoreCase))
+            return "خطأ في الاتصال بالشبكة";
+        if (msg.Contains("timeout", StringComparison.OrdinalIgnoreCase))
+            return "انتهت مهلة الاتصال";
+        if (msg.Contains("API key", StringComparison.OrdinalIgnoreCase) ||
+            msg.Contains("401", StringComparison.OrdinalIgnoreCase))
+            return "مفتاح API غير صالح";
+        if (msg.Contains("rate limit", StringComparison.OrdinalIgnoreCase) ||
+            msg.Contains("429", StringComparison.OrdinalIgnoreCase))
+            return "تم تجاوز الحد المسموح — حاول لاحقاً";
+        if (msg.Contains("ffmpeg", StringComparison.OrdinalIgnoreCase))
+            return "فشل تحويل الملف — صيغة غير مدعومة";
+        // If already Arabic, return as-is
+        if (msg.Any(c => c >= 0x0600 && c <= 0x06FF))
+            return msg;
+        return "خطأ غير متوقع — حاول مرة أخرى";
     }
 
     private static string EscapeMarkdown(string text)
