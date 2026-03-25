@@ -31,7 +31,7 @@ services:
       - DB_PATH=/app/data/fatwas_bot.db
     volumes:
       - bot_data:/app/data
-      - telegram_api_data:/var/lib/telegram-bot-api:ro
+      - telegram_api_data:/var/lib/telegram-bot-api
 
 volumes:
   bot_data:

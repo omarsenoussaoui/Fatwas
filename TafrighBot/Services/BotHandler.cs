@@ -144,6 +144,7 @@ public class BotHandler
             _logger.LogInformation("File path: {Path}, Size: {Size}", file.FilePath, file.FileSize);
 
             byte[] rawData;
+            string? localFilePath = null; // Track for cleanup after success
 
             // Local Bot API returns absolute file paths on disk
             if (file.FilePath != null && (file.FilePath.StartsWith("/") || Path.IsPathRooted(file.FilePath)))
@@ -152,7 +153,6 @@ public class BotHandler
                 var localPath = file.FilePath;
                 if (!File.Exists(localPath))
                 {
-                    // Try under the telegram-bot-api data directory
                     localPath = Path.Combine("/var/lib/telegram-bot-api", file.FilePath.TrimStart('/'));
                 }
 
@@ -160,6 +160,7 @@ public class BotHandler
                 {
                     _logger.LogInformation("Reading file directly from disk: {Path}", localPath);
                     rawData = await File.ReadAllBytesAsync(localPath);
+                    localFilePath = localPath;
                 }
                 else
                 {
@@ -247,6 +248,20 @@ public class BotHandler
             }
 
             _logger.LogInformation("Successfully transcribed {FileName} for user {UserId}", fileName, userId);
+
+            // Clean up: delete the file from disk after successful transcription
+            if (localFilePath != null)
+            {
+                try
+                {
+                    File.Delete(localFilePath);
+                    _logger.LogInformation("Deleted local file: {Path}", localFilePath);
+                }
+                catch (Exception delEx)
+                {
+                    _logger.LogWarning("Could not delete local file {Path}: {Error}", localFilePath, delEx.Message);
+                }
+            }
         }
         catch (Exception ex)
         {
