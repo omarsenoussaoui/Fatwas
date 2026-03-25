@@ -138,8 +138,11 @@ public class BotHandler
 
         try
         {
-            // Download file from Telegram
+            // Download file from Telegram (local Bot API supports up to 2GB)
+            _logger.LogInformation("Getting file info for {FileId}...", fileId);
             var file = await _bot.GetFile(fileId);
+            _logger.LogInformation("File path: {Path}, Size: {Size}", file.FilePath, file.FileSize);
+
             using var ms = new MemoryStream();
             await _bot.DownloadFile(file.FilePath!, ms);
             var rawData = ms.ToArray();

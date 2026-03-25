@@ -20,11 +20,13 @@ builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 // Register services — use local Bot API server if configured (removes 20MB limit)
 if (!string.IsNullOrEmpty(telegramApiUrl))
 {
+    Console.WriteLine($"[STARTUP] Using LOCAL Telegram Bot API: {telegramApiUrl}");
     var options = new TelegramBotClientOptions(botToken, telegramApiUrl);
     builder.Services.AddSingleton<ITelegramBotClient>(new TelegramBotClient(options));
 }
 else
 {
+    Console.WriteLine("[STARTUP] Using OFFICIAL Telegram Bot API");
     builder.Services.AddSingleton<ITelegramBotClient>(new TelegramBotClient(botToken));
 }
 builder.Services.AddSingleton(sp => new GroqTranscriber(groqApiKey, sp.GetRequiredService<ILogger<GroqTranscriber>>()));
