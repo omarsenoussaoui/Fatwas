@@ -50,7 +50,9 @@ public class BotHandler
             switch (command)
             {
                 case "/start":
-                    await SendStartMessage(message.Chat.Id);
+                    var userId = message.From?.Id ?? message.Chat.Id;
+                    var isFirstUse = await _db.IsFirstUseAsync(userId);
+                    await SendStartMessage(message.Chat.Id, isFirstUse);
                     return;
                 case "/help":
                     await SendHelpMessage(message.Chat.Id);
@@ -220,7 +222,7 @@ public class BotHandler
         }
     }
 
-    private async Task SendStartMessage(long chatId)
+    private async Task SendStartMessage(long chatId, bool isFirstUse)
     {
         var text = "﷽\n\n"
             + $"🕌 *مرحباً بكم في بوت تفريغ فتاوى*\n*{EscapeMarkdown(SheikhName)}*\n\n"
@@ -233,6 +235,19 @@ public class BotHandler
             + "اكتب /help لمزيد من المعلومات\\.";
 
         await _bot.SendMessage(chatId: chatId, text: text, parseMode: ParseMode.MarkdownV2);
+
+        if (isFirstUse)
+        {
+            var sadaqa = "━━━━━━━━━━━━━━━\n\n"
+                + "🤲 *نسألكم الدعاء*\n\n"
+                + "نرجو منكم الدعاء للقائمين على هذا البوت ولوالديهم بالمغفرة والرحمة\\.\n"
+                + "وندعو كذلك للأخ مهدي على توجيهه ودعمه لنا\\.\n\n"
+                + "اللهم اغفر لهم ولوالديهم وارحمهم وعافهم واعف عنهم\n\n"
+                + "جزاكم الله خيراً 🤲\n"
+                + "━━━━━━━━━━━━━━━";
+
+            await _bot.SendMessage(chatId: chatId, text: sadaqa, parseMode: ParseMode.MarkdownV2);
+        }
     }
 
     private async Task SendHelpMessage(long chatId)

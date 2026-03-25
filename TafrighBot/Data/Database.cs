@@ -33,6 +33,12 @@ public class Database
                 CreatedAt TEXT NOT NULL DEFAULT (datetime('now'))
             )
         ");
+        await conn.ExecuteAsync(@"
+            CREATE TABLE IF NOT EXISTS users (
+                TelegramUserId INTEGER PRIMARY KEY,
+                FirstSeenAt TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        ");
     }
 
     public async Task<long> SaveTranscriptionAsync(Transcription t)
@@ -71,5 +77,24 @@ public class Database
             "SELECT COUNT(*) FROM transcriptions");
 
         return (userCount, totalCount);
+    }
+
+    /// Returns true if this is the first time the user uses the bot
+    public async Task<bool> IsFirstUseAsync(long userId)
+    {
+        using var conn = new SqliteConnection(_connectionString);
+        await conn.OpenAsync();
+        var exists = await conn.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM users WHERE TelegramUserId = @userId",
+            new { userId });
+
+        if (exists == 0)
+        {
+            await conn.ExecuteAsync(
+                "INSERT INTO users (TelegramUserId) VALUES (@userId)",
+                new { userId });
+            return true;
+        }
+        return false;
     }
 }
