@@ -19,6 +19,7 @@ builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 // Register services
 builder.Services.AddSingleton<ITelegramBotClient>(new TelegramBotClient(botToken));
 builder.Services.AddSingleton(sp => new GroqTranscriber(groqApiKey, sp.GetRequiredService<ILogger<GroqTranscriber>>()));
+builder.Services.AddSingleton(sp => new AudioConverter(sp.GetRequiredService<ILogger<AudioConverter>>()));
 builder.Services.AddSingleton(new Database(dbPath));
 builder.Services.AddSingleton<BotHandler>();
 

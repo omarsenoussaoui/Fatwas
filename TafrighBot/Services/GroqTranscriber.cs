@@ -25,9 +25,6 @@ public class GroqTranscriber
 
     public async Task<string> TranscribeAsync(byte[] audioData, string fileName)
     {
-        if (audioData.Length > MaxFileSize)
-            throw new InvalidOperationException(
-                $"حجم الملف كبير جداً ({audioData.Length / 1024 / 1024}MB). الحد الأقصى 25MB.");
 
         for (int attempt = 0; attempt <= MaxRetries; attempt++)
         {

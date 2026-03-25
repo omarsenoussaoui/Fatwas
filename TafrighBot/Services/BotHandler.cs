@@ -13,17 +13,20 @@ public class BotHandler
 
     private readonly ITelegramBotClient _bot;
     private readonly GroqTranscriber _transcriber;
+    private readonly AudioConverter _converter;
     private readonly Database _db;
     private readonly ILogger<BotHandler> _logger;
 
     public BotHandler(
         ITelegramBotClient bot,
         GroqTranscriber transcriber,
+        AudioConverter converter,
         Database db,
         ILogger<BotHandler> logger)
     {
         _bot = bot;
         _transcriber = transcriber;
+        _converter = converter;
         _db = db;
         _logger = logger;
     }
@@ -139,13 +142,18 @@ public class BotHandler
             var file = await _bot.GetFile(fileId);
             using var ms = new MemoryStream();
             await _bot.DownloadFile(file.FilePath!, ms);
-            var audioData = ms.ToArray();
+            var rawData = ms.ToArray();
 
-            _logger.LogInformation("Transcribing {FileName} ({Size}KB) for user {UserId}",
-                fileName, audioData.Length / 1024, userId);
+            _logger.LogInformation("Downloaded {FileName} ({Size}KB) for user {UserId}",
+                fileName, rawData.Length / 1024, userId);
+
+            // Compress/convert audio with ffmpeg if needed
+            var (audioData, processedName) = await _converter.CompressForGroqAsync(rawData, fileName);
+
+            _logger.LogInformation("Transcribing {FileName} ({Size}KB)", processedName, audioData.Length / 1024);
 
             // Transcribe
-            var text = await _transcriber.TranscribeAsync(audioData, fileName);
+            var text = await _transcriber.TranscribeAsync(audioData, processedName);
 
             // Save to database
             await _db.SaveTranscriptionAsync(new Transcription

@@ -16,7 +16,11 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app .
 
-RUN mkdir -p /app/data
+# Install ffmpeg for audio extraction and compression
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /app/data /app/temp
 
 EXPOSE 5060
 
