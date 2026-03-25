@@ -143,9 +143,39 @@ public class BotHandler
             var file = await _bot.GetFile(fileId);
             _logger.LogInformation("File path: {Path}, Size: {Size}", file.FilePath, file.FileSize);
 
-            using var ms = new MemoryStream();
-            await _bot.DownloadFile(file.FilePath!, ms);
-            var rawData = ms.ToArray();
+            byte[] rawData;
+
+            // Local Bot API returns absolute file paths on disk
+            if (file.FilePath != null && (file.FilePath.StartsWith("/") || Path.IsPathRooted(file.FilePath)))
+            {
+                // Try reading directly from shared volume
+                var localPath = file.FilePath;
+                if (!File.Exists(localPath))
+                {
+                    // Try under the telegram-bot-api data directory
+                    localPath = Path.Combine("/var/lib/telegram-bot-api", file.FilePath.TrimStart('/'));
+                }
+
+                if (File.Exists(localPath))
+                {
+                    _logger.LogInformation("Reading file directly from disk: {Path}", localPath);
+                    rawData = await File.ReadAllBytesAsync(localPath);
+                }
+                else
+                {
+                    _logger.LogWarning("Local file not found at {Path}, falling back to API download", localPath);
+                    using var ms = new MemoryStream();
+                    await _bot.DownloadFile(file.FilePath, ms);
+                    rawData = ms.ToArray();
+                }
+            }
+            else
+            {
+                // Standard download via Bot API
+                using var ms = new MemoryStream();
+                await _bot.DownloadFile(file.FilePath!, ms);
+                rawData = ms.ToArray();
+            }
 
             _logger.LogInformation("Downloaded {FileName} ({Size}KB) for user {UserId}",
                 fileName, rawData.Length / 1024, userId);
