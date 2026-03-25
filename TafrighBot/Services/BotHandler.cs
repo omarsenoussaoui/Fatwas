@@ -1,0 +1,311 @@
+using Telegram.Bot;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
+using TafrighBot.Data;
+using TafrighBot.Models;
+
+namespace TafrighBot.Services;
+
+public class BotHandler
+{
+    private const string SheikhName = "الشيخ بن حنيفية زين العابدين";
+    private const int TelegramMaxLength = 4096;
+
+    private readonly ITelegramBotClient _bot;
+    private readonly GroqTranscriber _transcriber;
+    private readonly Database _db;
+    private readonly ILogger<BotHandler> _logger;
+
+    public BotHandler(
+        ITelegramBotClient bot,
+        GroqTranscriber transcriber,
+        Database db,
+        ILogger<BotHandler> logger)
+    {
+        _bot = bot;
+        _transcriber = transcriber;
+        _db = db;
+        _logger = logger;
+    }
+
+    public async Task HandleUpdateAsync(Update update)
+    {
+        try
+        {
+            if (update.Message is { } message)
+                await HandleMessageAsync(message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling update {UpdateId}", update.Id);
+        }
+    }
+
+    private async Task HandleMessageAsync(Message message)
+    {
+        // Handle commands
+        if (message.Text?.StartsWith('/') == true)
+        {
+            var command = message.Text.Split(' ')[0].Split('@')[0].ToLower();
+            switch (command)
+            {
+                case "/start":
+                    await SendStartMessage(message.Chat.Id);
+                    return;
+                case "/help":
+                    await SendHelpMessage(message.Chat.Id);
+                    return;
+                case "/history":
+                    await SendHistory(message);
+                    return;
+                case "/stats":
+                    await SendStats(message);
+                    return;
+            }
+        }
+
+        // Handle voice messages
+        if (message.Voice != null)
+        {
+            await ProcessAudioAsync(message, message.Voice.FileId,
+                "voice.ogg", message.Voice.Duration);
+            return;
+        }
+
+        // Handle audio files
+        if (message.Audio != null)
+        {
+            var fileName = message.Audio.FileName ?? "audio.mp3";
+            await ProcessAudioAsync(message, message.Audio.FileId,
+                fileName, message.Audio.Duration);
+            return;
+        }
+
+        // Handle documents that are audio
+        if (message.Document != null && IsAudioMimeType(message.Document.MimeType))
+        {
+            var fileName = message.Document.FileName ?? "audio.mp3";
+            await ProcessAudioAsync(message, message.Document.FileId, fileName, 0);
+            return;
+        }
+
+        // Handle media groups (forwarded multiple voices)
+        // Each voice in a group triggers HandleMessageAsync separately, so handled above
+
+        // Not an audio message
+        await _bot.SendMessage(
+            chatId: message.Chat.Id,
+            text: "🎤 أرسل لي رسالة صوتية أو ملف صوتي وسأقوم بتحويله إلى نص.\n\n"
+                + "اكتب /help للمساعدة.",
+            replyParameters: new ReplyParameters { MessageId = message.MessageId }
+        );
+    }
+
+    private async Task ProcessAudioAsync(Message message, string fileId, string fileName, int duration)
+    {
+        var chatId = message.Chat.Id;
+        var userId = message.From?.Id ?? chatId;
+        var userName = message.From?.FirstName ?? "";
+
+        // Send "typing" action
+        await _bot.SendChatAction(chatId, ChatAction.Typing);
+
+        // Send processing message
+        var processingMsg = await _bot.SendMessage(
+            chatId: chatId,
+            text: "⏳ جاري تحويل الصوت إلى نص...\nيرجى الانتظار.",
+            replyParameters: new ReplyParameters { MessageId = message.MessageId }
+        );
+
+        try
+        {
+            // Download file from Telegram
+            var file = await _bot.GetFile(fileId);
+            using var ms = new MemoryStream();
+            await _bot.DownloadFile(file.FilePath!, ms);
+            var audioData = ms.ToArray();
+
+            _logger.LogInformation("Transcribing {FileName} ({Size}KB) for user {UserId}",
+                fileName, audioData.Length / 1024, userId);
+
+            // Transcribe
+            var text = await _transcriber.TranscribeAsync(audioData, fileName);
+
+            // Save to database
+            await _db.SaveTranscriptionAsync(new Transcription
+            {
+                TelegramUserId = userId,
+                UserName = userName,
+                FileName = fileName,
+                DurationSeconds = duration,
+                Text = text,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            // Delete processing message
+            try { await _bot.DeleteMessage(chatId, processingMsg.MessageId); } catch { }
+
+            // Send result — handle Telegram's 4096 char limit
+            var header = $"📝 *{SheikhName}*\n"
+                       + $"📁 `{EscapeMarkdown(fileName)}`\n"
+                       + "━━━━━━━━━━━━━━━\n\n";
+
+            var fullMessage = header + EscapeMarkdown(text);
+
+            if (fullMessage.Length <= TelegramMaxLength)
+            {
+                await _bot.SendMessage(
+                    chatId: chatId,
+                    text: fullMessage,
+                    parseMode: ParseMode.MarkdownV2,
+                    replyParameters: new ReplyParameters { MessageId = message.MessageId }
+                );
+            }
+            else
+            {
+                // Send header first
+                await _bot.SendMessage(
+                    chatId: chatId,
+                    text: header + EscapeMarkdown(text[..(TelegramMaxLength - header.Length - 50)]) + "\n\n⬇️ *يتبع\\.\\.\\.*",
+                    parseMode: ParseMode.MarkdownV2,
+                    replyParameters: new ReplyParameters { MessageId = message.MessageId }
+                );
+
+                // Send remaining parts
+                var remaining = text[(TelegramMaxLength - header.Length - 50)..];
+                while (remaining.Length > 0)
+                {
+                    var chunk = remaining.Length > TelegramMaxLength - 10
+                        ? remaining[..(TelegramMaxLength - 10)]
+                        : remaining;
+                    remaining = remaining[chunk.Length..];
+
+                    var suffix = remaining.Length > 0 ? "\n\n⬇️ *يتبع\\.\\.\\.*" : "\n\n✅ *انتهى*";
+                    await _bot.SendMessage(
+                        chatId: chatId,
+                        text: EscapeMarkdown(chunk) + suffix,
+                        parseMode: ParseMode.MarkdownV2
+                    );
+                }
+            }
+
+            _logger.LogInformation("Successfully transcribed {FileName} for user {UserId}", fileName, userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Transcription failed for {FileName}", fileName);
+
+            // Delete processing message
+            try { await _bot.DeleteMessage(chatId, processingMsg.MessageId); } catch { }
+
+            await _bot.SendMessage(
+                chatId: chatId,
+                text: $"❌ فشل التحويل: {ex.Message}\n\nأعد إرسال الملف للمحاولة مرة أخرى.",
+                replyParameters: new ReplyParameters { MessageId = message.MessageId }
+            );
+        }
+    }
+
+    private async Task SendStartMessage(long chatId)
+    {
+        var text = "﷽\n\n"
+            + $"🕌 *مرحباً بكم في بوت تفريغ فتاوى*\n*{EscapeMarkdown(SheikhName)}*\n\n"
+            + "هذا البوت يقوم بتحويل الرسائل الصوتية والملفات الصوتية إلى نص مكتوب\\.\n\n"
+            + "📌 *طريقة الاستخدام:*\n"
+            + "1️⃣ أرسل أو أعد توجيه رسالة صوتية\n"
+            + "2️⃣ أو أرسل ملف صوتي \\(mp3, wav, m4a, ogg\\)\n"
+            + "3️⃣ انتظر قليلاً وستحصل على النص\n\n"
+            + "يمكنك إرسال عدة رسائل صوتية وسيتم تحويل كل واحدة على حدة\\.\n\n"
+            + "اكتب /help لمزيد من المعلومات\\.";
+
+        await _bot.SendMessage(chatId: chatId, text: text, parseMode: ParseMode.MarkdownV2);
+    }
+
+    private async Task SendHelpMessage(long chatId)
+    {
+        var text = "📖 *المساعدة*\n\n"
+            + "🎤 *إرسال صوت:* أرسل رسالة صوتية أو ملف صوتي وسيتم تحويله إلى نص\n\n"
+            + "📋 *الأوامر المتاحة:*\n"
+            + "/start \\- رسالة الترحيب\n"
+            + "/help \\- هذه المساعدة\n"
+            + "/history \\- آخر 10 تفريغات\n"
+            + "/stats \\- إحصائياتك\n\n"
+            + "📁 *الصيغ المدعومة:*\n"
+            + "mp3, wav, m4a, ogg, flac, webm\n\n"
+            + "⚠️ *الحد الأقصى:* 25MB لكل ملف\n\n"
+            + $"🕌 *{EscapeMarkdown(SheikhName)}*";
+
+        await _bot.SendMessage(chatId: chatId, text: text, parseMode: ParseMode.MarkdownV2);
+    }
+
+    private async Task SendHistory(Message message)
+    {
+        var userId = message.From?.Id ?? message.Chat.Id;
+        var history = await _db.GetHistoryAsync(userId);
+        var items = history.ToList();
+
+        if (items.Count == 0)
+        {
+            await _bot.SendMessage(
+                chatId: message.Chat.Id,
+                text: "📭 لا توجد تفريغات سابقة.\n\nأرسل رسالة صوتية لبدء التفريغ."
+            );
+            return;
+        }
+
+        var text = "📜 *آخر التفريغات:*\n\n";
+        for (int i = 0; i < items.Count; i++)
+        {
+            var t = items[i];
+            var date = t.CreatedAt.ToString("yyyy/MM/dd HH:mm");
+            var preview = t.Text.Length > 80 ? t.Text[..80] + "..." : t.Text;
+            text += $"{i + 1}\\. 📁 `{EscapeMarkdown(t.FileName)}`\n"
+                  + $"   📅 {EscapeMarkdown(date)}\n"
+                  + $"   {EscapeMarkdown(preview)}\n\n";
+        }
+
+        // Truncate if too long
+        if (text.Length > TelegramMaxLength)
+            text = text[..(TelegramMaxLength - 10)] + "\n\\.\\.\\.";
+
+        await _bot.SendMessage(
+            chatId: message.Chat.Id,
+            text: text,
+            parseMode: ParseMode.MarkdownV2
+        );
+    }
+
+    private async Task SendStats(Message message)
+    {
+        var userId = message.From?.Id ?? message.Chat.Id;
+        var (userCount, totalCount) = await _db.GetStatsAsync(userId);
+
+        var text = "📊 *الإحصائيات*\n\n"
+            + $"👤 تفريغاتك: *{userCount}*\n"
+            + $"🌍 إجمالي التفريغات: *{totalCount}*\n\n"
+            + $"🕌 *{EscapeMarkdown(SheikhName)}*";
+
+        await _bot.SendMessage(
+            chatId: message.Chat.Id,
+            text: text,
+            parseMode: ParseMode.MarkdownV2
+        );
+    }
+
+    private static bool IsAudioMimeType(string? mimeType)
+    {
+        if (string.IsNullOrEmpty(mimeType)) return false;
+        return mimeType.StartsWith("audio/") ||
+               mimeType == "application/ogg" ||
+               mimeType == "video/webm"; // Some voice apps send as webm
+    }
+
+    private static string EscapeMarkdown(string text)
+    {
+        // Escape MarkdownV2 special characters
+        var chars = new[] { '_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!' };
+        foreach (var c in chars)
+            text = text.Replace(c.ToString(), $"\\{c}");
+        return text;
+    }
+}

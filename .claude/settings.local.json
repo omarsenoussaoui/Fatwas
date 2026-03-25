@@ -14,7 +14,8 @@
       "Bash(python -m py_compile transcriber.py)",
       "Bash(python -m py_compile bot.py)",
       "Bash(python -m py_compile main.py)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(dotnet build:*)"
     ]
   }
 }
