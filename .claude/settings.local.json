@@ -13,7 +13,8 @@
       "Bash(python -m py_compile database.py)",
       "Bash(python -m py_compile transcriber.py)",
       "Bash(python -m py_compile bot.py)",
-      "Bash(python -m py_compile main.py)"
+      "Bash(python -m py_compile main.py)",
+      "Bash(pip install:*)"
     ]
   }
 }
