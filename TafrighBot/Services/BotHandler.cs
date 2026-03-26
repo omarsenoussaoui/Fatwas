@@ -203,46 +203,34 @@ public class BotHandler
             // Delete processing message
             try { await _bot.DeleteMessage(chatId, processingMsg.MessageId); } catch { }
 
-            // Send result — handle Telegram's 4096 char limit
-            var header = $"📝 *{SheikhName}*\n"
-                       + $"📁 `{EscapeMarkdown(fileName)}`\n"
-                       + "━━━━━━━━━━━━━━━\n\n";
-
-            var fullMessage = header + EscapeMarkdown(text);
+            // Send result as plain text (avoids MarkdownV2 escaping issues with Arabic)
+            var header = $"📝 {SheikhName}\n📁 {fileName}\n━━━━━━━━━━━━━━━\n\n";
+            var fullMessage = header + text;
 
             if (fullMessage.Length <= TelegramMaxLength)
             {
                 await _bot.SendMessage(
                     chatId: chatId,
                     text: fullMessage,
-                    parseMode: ParseMode.MarkdownV2,
                     replyParameters: new ReplyParameters { MessageId = message.MessageId }
                 );
             }
             else
             {
-                // Send header first
-                await _bot.SendMessage(
-                    chatId: chatId,
-                    text: header + EscapeMarkdown(text[..(TelegramMaxLength - header.Length - 50)]) + "\n\n⬇️ *يتبع\\.\\.\\.*",
-                    parseMode: ParseMode.MarkdownV2,
-                    replyParameters: new ReplyParameters { MessageId = message.MessageId }
-                );
+                // Split into chunks for long texts
+                var chunks = SplitText(text, TelegramMaxLength - header.Length - 30);
 
-                // Send remaining parts
-                var remaining = text[(TelegramMaxLength - header.Length - 50)..];
-                while (remaining.Length > 0)
+                for (int ci = 0; ci < chunks.Count; ci++)
                 {
-                    var chunk = remaining.Length > TelegramMaxLength - 10
-                        ? remaining[..(TelegramMaxLength - 10)]
-                        : remaining;
-                    remaining = remaining[chunk.Length..];
+                    var prefix = ci == 0 ? header : "";
+                    var suffix = ci < chunks.Count - 1 ? "\n\n⬇️ يتبع..." : "\n\n✅ انتهى";
 
-                    var suffix = remaining.Length > 0 ? "\n\n⬇️ *يتبع\\.\\.\\.*" : "\n\n✅ *انتهى*";
                     await _bot.SendMessage(
                         chatId: chatId,
-                        text: EscapeMarkdown(chunk) + suffix,
-                        parseMode: ParseMode.MarkdownV2
+                        text: prefix + chunks[ci] + suffix,
+                        replyParameters: ci == 0
+                            ? new ReplyParameters { MessageId = message.MessageId }
+                            : null
                     );
                 }
             }
@@ -393,6 +381,28 @@ public class BotHandler
         return mimeType.StartsWith("audio/") ||
                mimeType.StartsWith("video/") ||
                mimeType == "application/ogg";
+    }
+
+    private static List<string> SplitText(string text, int maxLength)
+    {
+        var chunks = new List<string>();
+        while (text.Length > 0)
+        {
+            if (text.Length <= maxLength)
+            {
+                chunks.Add(text);
+                break;
+            }
+
+            // Try to split at a newline or space near the limit
+            var splitAt = text.LastIndexOf('\n', maxLength);
+            if (splitAt < maxLength / 2) splitAt = text.LastIndexOf(' ', maxLength);
+            if (splitAt < maxLength / 2) splitAt = maxLength;
+
+            chunks.Add(text[..splitAt]);
+            text = text[splitAt..].TrimStart();
+        }
+        return chunks;
     }
 
     private static string GetArabicErrorMessage(Exception ex)
